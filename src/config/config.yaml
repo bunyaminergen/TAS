@@ -1,0 +1,165 @@
+device:
+  type: "auto"
+
+cuda:
+  cuda_alloc_conf: "expandable_segments:True"
+  allow_tf32: true
+
+teacher:
+  base:
+    prompt_length: 17
+    output_path: ".data/dataset/teacher/teacher.jsonl"
+  open:
+    model:
+      name: "stabilityai/stable-code-instruct-3b"
+      save_path: ".model/teacher"
+      trust_remote_code: True
+      attn_implementation: "flash_attention_2"
+      bfloat16: True
+    pipeline:
+      max_new_tokens: 1024
+      temperature: 0.5
+      top_p: 0.95
+      top_k: 100
+      use_cache: False
+      do_sample: True
+      batch_size: 256
+      resume: true
+    tokenizer:
+      additional_special_tokens: [ "<|im_end|>" ]
+      padding_side: "left"
+      add_generation_prompt: True
+      tokenize: False
+      padding: True
+      truncation: True
+      skip_special_tokens: True
+      clean_up_tokenization_spaces: True
+      use_fast: True
+    data:
+      download:
+        size: 64k
+  closed:
+    model:
+      name: "gpt-3.5-turbo"
+    pipeline:
+      temperature: 0.7
+      top_p: 0.9
+      batch_size: 1024
+    data:
+      download:
+        size: 64k
+
+assistant:
+  model:
+    name: "Qwen/Qwen2.5-Coder-1.5B-Instruct"
+    save_path: ".model/assistant/base"
+    attn_implementation: "flash_attention_2"
+    bfloat16: true
+  tokenizer:
+    padding_side: "left"
+    skip_special_tokens: True
+  quantization:
+    load_in_4bit: True
+    bfloat16: true
+    bnb_4bit_use_double_quant: True
+    bnb_4bit_quant_type: "nf4"
+  lora:
+    lora_r: 8
+    lora_alpha: 16
+    lora_dropout: 0.05
+    bias: "none"
+    task_type: "CAUSAL_LM"
+  inference:
+    max_new_tokens: 1024
+
+student:
+  base_model_name: "Qwen/Qwen2.5-Coder-1.5B-Instruct"
+  save_path: ".model/student"
+  hidden_size: 1280
+  intermediate_size: 5120
+  num_hidden_layers: 24
+  num_attention_heads: 20
+  max_position_embeddings: 1024
+  repo: "bunyaminergen/Qwen2.5-Coder-1.5B-Instruct-SFT-Distilled"
+
+train:
+  sft:
+    model_name: "Assistant"
+    save_path: .model/assistant/Assistant
+    num_train_epochs: 11
+    per_device_train_batch_size: 8
+    gradient_accumulation_steps: 2
+    learning_rate: 1e-4
+    bfloat16: false
+    fp16: true
+    eval_strategy: "no"
+    report_to: "mlflow"
+    overwrite_output_dir: True
+    logging_steps: 1000
+    save_steps: 10000
+    experiment:
+      name: "AssistantFineTuning"
+      path: ".logs/mlruns"
+      run_name: "AssistantFT"
+      set_tracking_uri: "file:.logs/mlruns"
+      dataset_artifact_path: "dataset"
+      model_artifact_path: "huggingface_model"
+      registered_model_name: "QwenLoRA"
+      dataset_tags:
+        version: "v1"
+        source: "prompts"
+    dataset:
+      seed: 19
+      test_size: 0.1
+      train_batched: True
+      eval_batched: True
+    tokenizer:
+      truncation: True
+      max_length: 1024
+      mlm: False
+    peft:
+      lora:
+        r: 16
+        lora_alpha: 32
+        lora_dropout: 0.05
+        target_modules: "all-linear"
+        modules_to_save: [ "lm_head", "embed_token" ]
+        task_type: "CAUSAL_LM"
+  distillation:
+    output_dir: ".model/student/Student"
+    overwrite_output_dir: True
+    num_train_epochs: 11
+    per_device_train_batch_size: 12
+    gradient_accumulation_steps: 2
+    learning_rate: 5e-5
+    bf16: True
+    evaluation_strategy: "epoch"
+    save_steps: 10000
+    report_to: "mlflow"
+    run_name: "KnowledgeDistillation"
+    experiment:
+      name: "StudentDistillation"
+      path: ".logs/mlruns"
+      run_name: "KD‑Student"
+      set_tracking_uri: "file:.logs/mlruns"
+      dataset_artifact_path: "dataset"
+      model_artifact_path: "huggingface_model"
+      registered_model_name: "StudentKD"
+      dataset_tags:
+        version: "v1"
+        source: "teacher_outputs"
+    knowledgedistillation:
+      weight: 0.3
+      loss:
+        temperature: 0.5
+        reduction: "batchmean"
+
+datasets:
+  - name: "nikhiljatiwal/Llama-3.2-Python-Alpaca-143k"
+    key: "instruction"
+    subset: "default"
+    external_local_path: null
+  - name: "jtatman/python-code-dataset-500k"
+    key: "instruction"
+    subset: "default"
+    external_local_path: null

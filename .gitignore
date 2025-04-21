@@ -1,0 +1,10 @@
+# Directory
+.idea
+.agile
+.data
+.model
+.logs
+.temp
+
+# Files
+.env
