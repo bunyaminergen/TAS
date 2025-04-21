@@ -10,10 +10,10 @@ the [Introduction](#introduction) section.
 **Note**: _If you would like to contribute to this repository, please read the `CONTRIBUTING` file under
 the [Documentation](#documentation) section first._
 
-![License](https://img.shields.io/github/license/bunyaminergen/Callytics)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/bunyaminergen/Callytics)
-![GitHub Discussions](https://img.shields.io/github/discussions/bunyaminergen/Callytics)
-![GitHub Issues](https://img.shields.io/github/issues/bunyaminergen/Callytics)
+![License](https://img.shields.io/github/license/bunyaminergen/TAS)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/bunyaminergen/TAS)
+![GitHub Discussions](https://img.shields.io/github/discussions/bunyaminergen/TAS)
+![GitHub Issues](https://img.shields.io/github/issues/bunyaminergen/TAS)
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?logo=linkedin)](https://linkedin.com/in/bunyaminergen)
 
@@ -279,7 +279,7 @@ As a Teacher:
 
 As the base Assistant (before SFT):
 
-- [Qwen/Qwen2.5-Coder-1.5B-Instruct · Hugging Face](https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct)
+- [Qwen/Qwen2.5-Coder-1.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct)
 
 ### Citation
 
